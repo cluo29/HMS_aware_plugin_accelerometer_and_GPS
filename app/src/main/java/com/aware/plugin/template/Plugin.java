@@ -6,6 +6,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
@@ -43,6 +44,21 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+
+
+        Log.d("SENSORS", "x= "+event.values[0]);
+        Log.d("SENSORS", "y= "+event.values[1]);
+        Log.d("SENSORS", "z= "+event.values[2]);
+
+        float accelerometer_x=event.values[0];
+        float accelerometer_y=event.values[1];
+        float accelerometer_z=event.values[2];
+
+        double GPS_latitude=77.456789; //sixth decimal place is worth up to 0.11 m:
+        double GPS_longitude=123.456789;
+        //in android, altitude, latitude, longitude are double. bearing and speed are float.
+        //http://developer.android.com/reference/android/location/Location.html
+
         ContentValues rowData = new ContentValues();
         rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
         rowData.put(Template_Data.TIMESTAMP, System.currentTimeMillis());
@@ -69,9 +85,15 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         DEBUG = Aware.getSetting(this, Aware_Preferences.DEBUG_FLAG).equals("true");
 
 
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+
+        mSensorManager.registerListener(this, mAccelerometer, SAMPLING_RATE);
 
         //Activate programmatically any sensors/plugins you need here
-        //e.g., Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER,true);
+        //Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER,true);
+        //Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER, SAMPLING_RATE);
         //NOTE: if using plugin with dashboard, you can specify the sensors you'll use there.
 
         //Any active plugin/sensor shares its overall context using broadcasts
@@ -109,7 +131,8 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         super.onDestroy();
 
         //Deactivate any sensors/plugins you activated here
-        //e.g., Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER, false);
+
+        //Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER, false);
 
         //Stop plugin
         Aware.stopPlugin(this, "com.aware.plugin.template");
