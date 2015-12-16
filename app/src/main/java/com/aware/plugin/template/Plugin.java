@@ -2,10 +2,13 @@ package com.aware.plugin.template;
 
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.aware.Aware;
@@ -16,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aware.plugin.template.Provider.Template_Data;
+import com.aware.plugin.template.Provider.Template_Data2;
 
 public class Plugin extends Aware_Plugin implements SensorEventListener{
 
@@ -31,42 +35,63 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
 
     private List<ContentValues> data_values = new ArrayList<ContentValues>();
+    private List<ContentValues> water_values = new ArrayList<ContentValues>();
 
-    //do GPS
-
-    //store data into AWARE database
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
     }
 
-    //get ACCelerometer first. then get GPS
 
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-
-        Log.d("SENSORS", "x= "+event.values[0]);
-        Log.d("SENSORS", "y= "+event.values[1]);
-        Log.d("SENSORS", "z= "+event.values[2]);
-
+        // accelerometer data
         float accelerometer_x=event.values[0];
         float accelerometer_y=event.values[1];
         float accelerometer_z=event.values[2];
 
+        Log.d("SENSORS", "x= "+accelerometer_x);
+        Log.d("SENSORS", "y= "+accelerometer_y);
+        Log.d("SENSORS", "z= "+accelerometer_z);
+
+        //fake some GPS
+
         double GPS_latitude=77.456789; //sixth decimal place is worth up to 0.11 m:
         double GPS_longitude=123.456789;
+        double GPS_altitude=8888.0; //If this location does not have an altitude then 0.0 is returned.
+        float GPS_bearing= 1.1f; //(0.0, 360.0]
+        float GPS_speed= 1.1f; // If this location does not have a speed then 0.0 is returned.
         //in android, altitude, latitude, longitude are double. bearing and speed are float.
         //http://developer.android.com/reference/android/location/Location.html
+
+        //water here
 
         ContentValues rowData = new ContentValues();
         rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
         rowData.put(Template_Data.TIMESTAMP, System.currentTimeMillis());
-        rowData.put(Template_Data.Accelerometer_X, event.values[0]);
-        rowData.put(Template_Data.Accelerometer_Y, event.values[1]);
-        rowData.put(Template_Data.Accelerometer_Z, event.values[2]);
+        rowData.put(Template_Data.Accelerometer_X, accelerometer_x);
+        rowData.put(Template_Data.Accelerometer_Y, accelerometer_y);
+        rowData.put(Template_Data.Accelerometer_Z, accelerometer_z);
+        rowData.put(Template_Data.LATITUDE, GPS_latitude);
+        rowData.put(Template_Data.LONGITUDE, GPS_longitude);
+        rowData.put(Template_Data.BEARING, GPS_bearing);
+        rowData.put(Template_Data.SPEED, GPS_speed);
+        rowData.put(Template_Data.ALTITUDE, GPS_altitude);
+
+        ContentValues waterData = new ContentValues();
+        waterData.put(Template_Data2.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+        waterData.put(Template_Data2.TIMESTAMP, System.currentTimeMillis());
+        waterData.put(Template_Data2.Accelerometer_X, accelerometer_x);
+        waterData.put(Template_Data2.Accelerometer_Y, accelerometer_y);
+        waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
 
 
+        if( data_values.size() < 250 ) {
+            data_values.add(rowData);
+            water_values.add(waterData);
+            return;
+        }
 
         /*
          Template_Data.LATITUDE + " real default 0," +
@@ -75,7 +100,44 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
                     Template_Data.SPEED + " real default 0," +
                     Template_Data.ALTITUDE + " real default 0," +
          */
+
+
+        ContentValues[] data_buffer = new ContentValues[data_values.size()];
+        data_values.toArray(data_buffer);
+
+        try {
+                new AsyncStore().execute(data_buffer);
+        }catch( SQLiteException e ) {
+            if(Aware.DEBUG) Log.d(TAG,e.getMessage());
+        }catch( SQLException e ) {
+            if(Aware.DEBUG) Log.d(TAG,e.getMessage());
+        }
+        data_values.clear();
+
+        ContentValues[] data_buffer2 = new ContentValues[water_values.size()];
+        water_values.toArray(data_buffer2);
+
+        try {
+            new AsyncStore().execute(data_buffer2);
+        }catch( SQLiteException e ) {
+            if(Aware.DEBUG) Log.d(TAG,e.getMessage());
+        }catch( SQLException e ) {
+            if(Aware.DEBUG) Log.d(TAG,e.getMessage());
+        }
+        water_values.clear();
     }
+
+    /**
+     * Database I/O on different thread
+     */
+    private class AsyncStore extends AsyncTask<ContentValues[], Void, Void> {
+        @Override
+        protected Void doInBackground(ContentValues[]... data) {
+            getContentResolver().bulkInsert(Template_Data.CONTENT_URI, data[0]);
+            return null;
+        }
+    }
+
 
     @Override
     public void onCreate() {
