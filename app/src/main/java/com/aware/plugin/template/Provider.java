@@ -31,7 +31,7 @@ public class Provider extends ContentProvider {
     private static final int CHARGING_MONITOR2 = 3;
     private static final int CHARGING_MONITOR2_ID = 4;
 
-    public static final String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/AWARE/template.db";
+    public static final String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/AWARE/template_water.db";
 
     //table 2 for watermarking data!
     public static final String[] DATABASE_TABLES = {

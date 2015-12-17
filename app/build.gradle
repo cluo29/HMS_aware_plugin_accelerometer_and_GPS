@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         applicationId "com.aware.plugin.template"
-        minSdkVersion 10
+        minSdkVersion 20
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
