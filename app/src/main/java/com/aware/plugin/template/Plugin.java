@@ -23,12 +23,16 @@ import com.aware.plugin.template.Provider.Template_Data2;
 
 public class Plugin extends Aware_Plugin implements SensorEventListener{
 
-
     //get a thread to collect real time accelerometer without using AWARE
     /**
      * Sensor update frequency in microseconds, default 200000
      */
-    private static int SAMPLING_RATE = 200000;
+
+    private static int SAMPLING_RATE = 20000; //200000= 0.2sec, 20000=20ms
+
+    //how many rows of container data are needed?
+
+    private static int rowsOfContainer = 10;
 
     private static SensorManager mSensorManager;
     private static Sensor mAccelerometer;
@@ -37,21 +41,25 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
     private List<ContentValues> data_values = new ArrayList<ContentValues>();
     private List<ContentValues> water_values = new ArrayList<ContentValues>();
 
+    private static boolean embeddingReady = false;
+    private static int embeddingComplete = 0;
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
     }
 
-
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE) {
+        //embedding is HR
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady) {
             heart_rate = (int) event.values[0];
+            embeddingReady=true;
+            embeddingComplete=0;
             Log.d("SENSORS", "heart_rate = " + heart_rate);
         }
 
-        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER &&1==0) {
+        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer) {
             // accelerometer data
             float accelerometer_x = event.values[0];
             float accelerometer_y = event.values[1];
@@ -61,18 +69,41 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             Log.d("SENSORS", "y= " + accelerometer_y);
             Log.d("SENSORS", "z= " + accelerometer_z);
 
-            //fake some GPS
 
+
+            embeddingComplete++;
+
+            Log.d("SENSORS", "embeddingComplete = " + embeddingComplete);
+
+            if(embeddingComplete==rowsOfContainer)
+            {
+                embeddingReady=false;
+            }
+
+            //HR as embedding
+            double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
+            double GPS_longitude = 0;
+            double GPS_altitude = 0; //If this location does not have an altitude then 0.0 is returned.
+            float GPS_bearing = 0f; //(0.0, 360.0]
+            float GPS_speed = 0f;
+
+
+            /*
+            //GPS as embedding
+            //fake some GPS
             double GPS_latitude = 77.456789; //sixth decimal place is worth up to 0.11 m:
             double GPS_longitude = 123.456789;
             double GPS_altitude = 8888.0; //If this location does not have an altitude then 0.0 is returned.
             float GPS_bearing = 1.1f; //(0.0, 360.0]
             float GPS_speed = 1.1f; // If this location does not have a speed then 0.0 is returned.
+            int heart_rate = 0;
             //in android, altitude, latitude, longitude are double. bearing and speed are float.
             //http://developer.android.com/reference/android/location/Location.html
+            */
 
             //water here
 
+            //save data in DB
 
             ContentValues rowData = new ContentValues();
             rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
@@ -85,6 +116,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             rowData.put(Template_Data.BEARING, GPS_bearing);
             rowData.put(Template_Data.SPEED, GPS_speed);
             rowData.put(Template_Data.ALTITUDE, GPS_altitude);
+            rowData.put(Template_Data.HeartRate, heart_rate);
 
             ContentValues waterData = new ContentValues();
             waterData.put(Template_Data2.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));

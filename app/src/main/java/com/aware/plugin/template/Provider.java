@@ -21,7 +21,7 @@ import com.aware.Aware;
 import com.aware.utils.DatabaseHelper;
 
 public class Provider extends ContentProvider {
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     /**
      * Provider authority: com.aware.plugin.template.provider.template
      */
@@ -59,6 +59,9 @@ public class Provider extends ContentProvider {
         public static final String BEARING = "double_Bearing";    //the location’s bearing, in degrees
         public static final String SPEED = "double_Speed";    //speed
         public static final String ALTITUDE = "double_Altitude";    //altitude
+
+        //HR
+        public static final String HeartRate = "double_HeartRate";
     }
 
     public static final class Template_Data2 implements BaseColumns {
@@ -92,6 +95,7 @@ public class Provider extends ContentProvider {
                     Template_Data.BEARING + " real default 0," +
                     Template_Data.SPEED + " real default 0," +
                     Template_Data.ALTITUDE + " real default 0," +
+                    Template_Data.HeartRate + " real default 0," +
                     "UNIQUE("+ Template_Data.TIMESTAMP+","+ Template_Data.DEVICE_ID+")",
 
             Template_Data2._ID + " integer primary key autoincrement," +
@@ -128,6 +132,7 @@ public class Provider extends ContentProvider {
         databaseMap.put(Template_Data.BEARING, Template_Data.BEARING);
         databaseMap.put(Template_Data.SPEED, Template_Data.SPEED);
         databaseMap.put(Template_Data.ALTITUDE, Template_Data.ALTITUDE);
+        databaseMap.put(Template_Data.HeartRate, Template_Data.HeartRate);
         databaseMap2 = new HashMap<>();
         databaseMap2.put(Template_Data2._ID, Template_Data2._ID);
         databaseMap2.put(Template_Data2.TIMESTAMP, Template_Data2.TIMESTAMP);
@@ -135,7 +140,6 @@ public class Provider extends ContentProvider {
         databaseMap2.put(Template_Data2.Accelerometer_X, Template_Data2.Accelerometer_X);
         databaseMap2.put(Template_Data2.Accelerometer_Y, Template_Data2.Accelerometer_Y);
         databaseMap2.put(Template_Data2.Accelerometer_Z, Template_Data2.Accelerometer_Z);
-
         return true;
     }
 
