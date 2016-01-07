@@ -126,12 +126,12 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
 
 
-            if (data_values.size() < 250) {
+            if (data_values.size() < 20) {
                 data_values.add(rowData);
                 water_values.add(waterData);
                 return;
             }
-            Log.d("SENSORS2", "250");
+            Log.d("SENSORS2", "20");
 
 
         /*
@@ -145,12 +145,15 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
             ContentValues[] data_buffer = new ContentValues[data_values.size()];
             data_values.toArray(data_buffer);
-
+            Log.d("SENSORS2", "148");
             try {
                 new AsyncStore().execute(data_buffer);
+                Log.d("SENSORS2", "151");
             } catch (SQLiteException e) {
                 if (Aware.DEBUG) Log.d(TAG, e.getMessage());
+                Log.d("SENSORS2", "154");
             } catch (SQLException e) {
+                Log.d("SENSORS2", "156");
                 if (Aware.DEBUG) Log.d(TAG, e.getMessage());
             }
             data_values.clear();
@@ -176,7 +179,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         @Override
         protected Void doInBackground(ContentValues[]... data) {
             getContentResolver().bulkInsert(Template_Data.CONTENT_URI, data[0]);
-            Log.d("SENSORS2", "XXXX");
+            Log.d("SENSORS2", "XXXX1");
             return null;
         }
     }
@@ -185,7 +188,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         @Override
         protected Void doInBackground(ContentValues[]... data) {
             getContentResolver().bulkInsert(Template_Data2.CONTENT_URI, data[0]);
-            Log.d("SENSORS2", "XXXX");
+            Log.d("SENSORS2", "XXXX2");
             return null;
         }
     }

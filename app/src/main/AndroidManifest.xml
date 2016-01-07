@@ -11,7 +11,11 @@
         tools:replace="android:icon, android:theme">
 
         <service android:name="com.aware.plugin.template.Plugin" android:exported="true" />
-
+        <provider android:name="com.aware.plugin.template.Provider"
+            android:authorities="${applicationId}.provider.template"
+            android:exported="true"
+            android:readPermission="com.aware.READ_CONTEXT_DATA"
+            android:writePermission="com.aware.WRITE_CONTEXT_DATA"/>
 
     </application>
 
