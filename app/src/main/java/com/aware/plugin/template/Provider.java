@@ -21,7 +21,7 @@ import com.aware.Aware;
 import com.aware.utils.DatabaseHelper;
 
 public class Provider extends ContentProvider {
-    public static final int DATABASE_VERSION = 2;
+    public static final int DATABASE_VERSION = 5;
     /**
      * Provider authority: com.aware.plugin.template.provider.template
      */
@@ -31,7 +31,7 @@ public class Provider extends ContentProvider {
     private static final int CHARGING_MONITOR2 = 3;
     private static final int CHARGING_MONITOR2_ID = 4;
 
-    public static final String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/AWARE/template_water.db";
+    public static final String DATABASE_NAME = Environment.getExternalStorageDirectory() + "/Download/template.db";
 
     //table 2 for watermarking data!
     public static final String[] DATABASE_TABLES = {
@@ -165,6 +165,9 @@ public class Provider extends ContentProvider {
             case CHARGING_MONITOR:
                 count = database.delete(DATABASE_TABLES[0], selection, selectionArgs);
                 break;
+            case CHARGING_MONITOR2:
+                count = database.delete(DATABASE_TABLES[1], selection, selectionArgs);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
@@ -180,6 +183,10 @@ public class Provider extends ContentProvider {
                 return Template_Data.CONTENT_TYPE;
             case CHARGING_MONITOR_ID:
                 return Template_Data.CONTENT_ITEM_TYPE;
+            case CHARGING_MONITOR2:
+                return Template_Data2.CONTENT_TYPE;
+            case CHARGING_MONITOR2_ID:
+                return Template_Data2.CONTENT_ITEM_TYPE;
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
@@ -207,6 +214,18 @@ public class Provider extends ContentProvider {
                     return new_uri;
                 }
                 throw new SQLException("Failed to insert row into " + uri);
+            case CHARGING_MONITOR2:
+                long weather_id2 = database.insert(DATABASE_TABLES[1], Template_Data2.DEVICE_ID, values);
+
+                if (weather_id2 > 0) {
+                    Uri new_uri = ContentUris.withAppendedId(
+                            Template_Data2.CONTENT_URI,
+                            weather_id2);
+                    getContext().getContentResolver().notifyChange(new_uri,
+                            null);
+                    return new_uri;
+                }
+                throw new SQLException("Failed to insert row into " + uri);
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
         }
@@ -224,6 +243,10 @@ public class Provider extends ContentProvider {
             case CHARGING_MONITOR:
                 qb.setTables(DATABASE_TABLES[0]);
                 qb.setProjectionMap(databaseMap);
+                break;
+            case CHARGING_MONITOR2:
+                qb.setTables(DATABASE_TABLES[1]);
+                qb.setProjectionMap(databaseMap2);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);
@@ -252,6 +275,10 @@ public class Provider extends ContentProvider {
         switch (URIMatcher.match(uri)) {
             case CHARGING_MONITOR:
                 count = database.update(DATABASE_TABLES[0], values, selection,
+                        selectionArgs);
+                break;
+            case CHARGING_MONITOR2:
+                count = database.update(DATABASE_TABLES[1], values, selection,
                         selectionArgs);
                 break;
             default:

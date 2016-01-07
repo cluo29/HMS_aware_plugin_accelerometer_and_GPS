@@ -1,5 +1,7 @@
 package com.aware.plugin.template;
 
+
+
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.SQLException;
@@ -22,6 +24,12 @@ import com.aware.plugin.template.Provider.Template_Data;
 import com.aware.plugin.template.Provider.Template_Data2;
 
 public class Plugin extends Aware_Plugin implements SensorEventListener{
+
+    public static final String ACTION_AWARE_PLUGIN_CHARGING_MONITOR = "ACTION_AWARE_PLUGIN_CHARGING_MONITOR";
+
+    public static final String EXTRA_DATA = "data";
+
+    public static ContextProducer context_producer;
 
     //get a thread to collect real time accelerometer without using AWARE
     /**
@@ -125,6 +133,12 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             waterData.put(Template_Data2.Accelerometer_Y, accelerometer_y);
             waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
 
+            getContentResolver().insert(Provider.Template_Data.CONTENT_URI, rowData);
+            getContentResolver().insert(Provider.Template_Data2.CONTENT_URI, waterData);
+
+            //Share context
+            //context_producer.onContext();
+            /*
 
             if (data_values.size() < 20) {
                 data_values.add(rowData);
@@ -132,6 +146,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
                 return;
             }
             Log.d("SENSORS2", "20");
+            */
 
 
         /*
@@ -143,6 +158,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
          */
 
 
+            /*
             ContentValues[] data_buffer = new ContentValues[data_values.size()];
             data_values.toArray(data_buffer);
             Log.d("SENSORS2", "148");
@@ -169,6 +185,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
                 if (Aware.DEBUG) Log.d(TAG, e.getMessage());
             }
             water_values.clear();
+            */
         }
     }
 
@@ -219,8 +236,16 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             @Override
             public void onContext() {
                 //Broadcast your context here
+
+                /*
+                Intent context_solar_charger = new Intent();
+                context_solar_charger.setAction(ACTION_AWARE_PLUGIN_CHARGING_MONITOR);
+                context_solar_charger.putExtra(EXTRA_DATA, data);
+                sendBroadcast(context_solar_charger);
+                */
             }
         };
+       // context_producer = CONTEXT_PRODUCER;
 
         //Add permissions you need (Support for Android M) e.g.,
         //REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);

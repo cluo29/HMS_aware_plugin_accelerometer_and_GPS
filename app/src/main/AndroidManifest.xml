@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.BODY_SENSORS"/>
-
+    <uses-permission android:name="com.aware.READ_CONTEXT_DATA"/>
+    <uses-permission android:name="com.aware.WRITE_CONTEXT_DATA"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
 
     <application android:allowBackup="true" android:label="@string/app_name"
         android:icon="@drawable/ic_launcher"
