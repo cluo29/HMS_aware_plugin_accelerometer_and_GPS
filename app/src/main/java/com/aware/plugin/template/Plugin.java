@@ -39,8 +39,9 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
     private static int SAMPLING_RATE = 20000; //200000= 0.2sec, 20000=20ms
 
     //how many rows of container data are needed?
+    final static int BITS = 1;
+    private static int rowsOfContainer = 32 / BITS;
 
-    private static int rowsOfContainer = 10;
 
     private static SensorManager mSensorManager;
     private static Sensor mAccelerometer;
@@ -51,6 +52,10 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     private static boolean embeddingReady = false;
     private static int embeddingComplete = 0;
+
+    String bits_heart_rate;
+
+    private static int cntr;//how many bits embedded
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
@@ -65,6 +70,8 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             embeddingReady=true;
             embeddingComplete=0;
             Log.d("SENSORS", "heart_rate = " + heart_rate);
+            cntr=0;
+            bits_heart_rate=String.format("%32s", Integer.toBinaryString(heart_rate)).replace(' ', '0');
         }
 
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer) {
@@ -77,16 +84,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             Log.d("SENSORS", "y= " + accelerometer_y);
             Log.d("SENSORS", "z= " + accelerometer_z);
 
-
-
-            embeddingComplete++;
-
-            Log.d("SENSORS", "embeddingComplete = " + embeddingComplete);
-
-            if(embeddingComplete==rowsOfContainer)
-            {
-                embeddingReady=false;
-            }
 
             //HR as embedding
             double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
@@ -111,6 +108,19 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
             //water here
 
+            int bits = Float.floatToIntBits(accelerometer_x);
+            String sbits = Long.toBinaryString(bits);
+            char[] cbits  = sbits.toCharArray();
+            cbits[Float.SIZE-1] = 1;
+            for (int i = 0; i < BITS;i++){
+                cbits[Float.SIZE-1-BITS] = bits_heart_rate.charAt(cntr);
+                cntr++;
+            }
+            sbits = String.valueOf(cbits);
+            bits = Integer.parseInt(sbits);
+            float accelerometer_x_w = Float.intBitsToFloat(bits);
+            //float  = Float.intBitsToFloat(bits);
+            //float accelerometer_x_w = Float.intBitsToFloat(bits);
             //save data in DB
 
             ContentValues rowData = new ContentValues();
@@ -129,7 +139,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             ContentValues waterData = new ContentValues();
             waterData.put(Template_Data2.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
             waterData.put(Template_Data2.TIMESTAMP, System.currentTimeMillis());
-            waterData.put(Template_Data2.Accelerometer_X, accelerometer_x);
+            waterData.put(Template_Data2.Accelerometer_X, accelerometer_x_w);
             waterData.put(Template_Data2.Accelerometer_Y, accelerometer_y);
             waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
 
@@ -186,6 +196,16 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             }
             water_values.clear();
             */
+
+
+            embeddingComplete++;
+
+            Log.d("SENSORS", "embeddingComplete = " + embeddingComplete);
+
+            if(embeddingComplete==rowsOfContainer)
+            {
+                embeddingReady=false;
+            }
         }
     }
 
