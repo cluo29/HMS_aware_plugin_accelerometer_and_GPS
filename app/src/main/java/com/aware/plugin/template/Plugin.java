@@ -107,22 +107,40 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             */
 
             //water here
-
+            Log.d("SENSORS","110");
             int bits = Float.floatToIntBits(accelerometer_x);
-            String sbits = Long.toBinaryString(bits);
+            Log.d("SENSORS","111="+bits);
+            String sbits = String.format("%32s", Integer.toBinaryString(bits)).replace(' ', '0');
+            Log.d("SENSORS","114="+sbits);
             char[] cbits  = sbits.toCharArray();
-            cbits[Float.SIZE-1] = 1;
+            cbits[Float.SIZE-1] = '1';
+            Log.d("SENSORS","115="+cbits);
             for (int i = 0; i < BITS;i++){
+                Log.d("SENSORS","117");
                 cbits[Float.SIZE-1-BITS] = bits_heart_rate.charAt(cntr);
                 cntr++;
             }
-            sbits = String.valueOf(cbits);
-            bits = Integer.parseInt(sbits);
-            float accelerometer_x_w = Float.intBitsToFloat(bits);
+            Log.d("SENSORS","121");
+            float accelerometer_x_w;
+            if(cbits[0] == '1')
+            {
+                cbits[0] = '0';
+                sbits = String.valueOf(cbits);
+                bits = Integer.parseInt(sbits,2);
+                accelerometer_x_w = -Float.intBitsToFloat(bits);
+
+            }
+            else
+            {
+                sbits = String.valueOf(cbits);
+                bits = Integer.parseInt(sbits,2);
+                accelerometer_x_w = Float.intBitsToFloat(bits);
+            }
+            //Log.d("SENSORS","125="+bits);
             //float  = Float.intBitsToFloat(bits);
             //float accelerometer_x_w = Float.intBitsToFloat(bits);
             //save data in DB
-
+            Log.d("SENSORS","129="+accelerometer_x_w);
             ContentValues rowData = new ContentValues();
             rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
             rowData.put(Template_Data.TIMESTAMP, System.currentTimeMillis());
