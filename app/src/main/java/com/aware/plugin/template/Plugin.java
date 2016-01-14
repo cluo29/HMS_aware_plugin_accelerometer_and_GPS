@@ -141,9 +141,12 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             //float accelerometer_x_w = Float.intBitsToFloat(bits);
             //save data in DB
             Log.d("SENSORS","129="+accelerometer_x_w);
+
+            long timestamp=System.currentTimeMillis();
+
             ContentValues rowData = new ContentValues();
             rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-            rowData.put(Template_Data.TIMESTAMP, System.currentTimeMillis());
+            rowData.put(Template_Data.TIMESTAMP, timestamp);
             rowData.put(Template_Data.Accelerometer_X, accelerometer_x);
             rowData.put(Template_Data.Accelerometer_Y, accelerometer_y);
             rowData.put(Template_Data.Accelerometer_Z, accelerometer_z);
@@ -156,7 +159,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
             ContentValues waterData = new ContentValues();
             waterData.put(Template_Data2.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-            waterData.put(Template_Data2.TIMESTAMP, System.currentTimeMillis());
+            waterData.put(Template_Data2.TIMESTAMP, timestamp);
             waterData.put(Template_Data2.Accelerometer_X, accelerometer_x_w);
             waterData.put(Template_Data2.Accelerometer_Y, accelerometer_y);
             waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
