@@ -57,6 +57,9 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     private static int cntr;//how many bits embedded
 
+    private static int heart_rate_count=0;
+    private static long timestamp_start=0;
+
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
     }
@@ -64,8 +67,24 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
+
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE&&1==0) {//&&1==0 not doing heart rate alone
+            heart_rate = (int) event.values[0];
+            Log.d("SENSORS", "heart_rate = " + heart_rate);
+            heart_rate_count++;
+            Log.d("SENSORS", "heart_rate count = "+heart_rate_count);
+            if(timestamp_start==0) {
+                timestamp_start=System.currentTimeMillis();
+            }
+
+            if(System.currentTimeMillis()-timestamp_start>=10000) //*3600)
+            {
+                Log.d("SENSORS10", "10 sec of heart_rate count = "+heart_rate_count);
+            }
+        }
         //embedding is HR
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady) {
+
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady&&1==0) { //&&1==0 not doing embedding
             heart_rate = (int) event.values[0];
             embeddingReady=true;
             embeddingComplete=0;
@@ -74,7 +93,8 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             bits_heart_rate=String.format("%32s", Integer.toBinaryString(heart_rate)).replace(' ', '0');
         }
 
-        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer) {
+
+        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer&&1==0) {//&&1==0 not doing embedding
             // accelerometer data
             float accelerometer_x = event.values[0];
             float accelerometer_y = event.values[1];
@@ -107,20 +127,20 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             */
 
             //water here
-            Log.d("SENSORS","110");
+            //Log.d("SENSORS","110");
             int bits = Float.floatToIntBits(accelerometer_x);
-            Log.d("SENSORS","111="+bits);
+            //Log.d("SENSORS","111="+bits);
             String sbits = String.format("%32s", Integer.toBinaryString(bits)).replace(' ', '0');
-            Log.d("SENSORS","114="+sbits);
+            //Log.d("SENSORS","114="+sbits);
             char[] cbits  = sbits.toCharArray();
             cbits[Float.SIZE-1] = '1';
-            Log.d("SENSORS","115="+cbits);
+            //Log.d("SENSORS","115="+cbits);
             for (int i = 0; i < BITS;i++){
-                Log.d("SENSORS","117");
-                cbits[Float.SIZE-1-BITS] = bits_heart_rate.charAt(cntr);
+                //Log.d("SENSORS","117");
+                cbits[Float.SIZE-2-i] = bits_heart_rate.charAt(cntr);
                 cntr++;
             }
-            Log.d("SENSORS","121");
+            //Log.d("SENSORS","121");
             float accelerometer_x_w;
             if(cbits[0] == '1')
             {
@@ -140,9 +160,13 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             //float  = Float.intBitsToFloat(bits);
             //float accelerometer_x_w = Float.intBitsToFloat(bits);
             //save data in DB
-            Log.d("SENSORS","129="+accelerometer_x_w);
+            // Log.d("SENSORS","129="+accelerometer_x_w);
+
 
             long timestamp=System.currentTimeMillis();
+
+            /*
+
 
             ContentValues rowData = new ContentValues();
             rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
@@ -166,6 +190,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
             getContentResolver().insert(Provider.Template_Data.CONTENT_URI, rowData);
             getContentResolver().insert(Provider.Template_Data2.CONTENT_URI, waterData);
+*/
 
             //Share context
             //context_producer.onContext();
@@ -221,8 +246,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
             embeddingComplete++;
 
-            Log.d("SENSORS", "embeddingComplete = " + embeddingComplete);
-
             if(embeddingComplete==rowsOfContainer)
             {
                 embeddingReady=false;
@@ -233,6 +256,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
     /**
      * Database I/O on different thread
      */
+    /*
     private class AsyncStore extends AsyncTask<ContentValues[], Void, Void> {
         @Override
         protected Void doInBackground(ContentValues[]... data) {
@@ -250,7 +274,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             return null;
         }
     }
-
+*/
     @Override
     public void onCreate() {
         super.onCreate();
