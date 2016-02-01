@@ -20,7 +20,7 @@ import java.util.List;
 //this service collects data and sends intent.
 public class Plugin extends Aware_Plugin implements SensorEventListener{
 
-    public static final String ACTION_AWARE_PLUGIN_CHARGING_MONITOR = "ACTION_AWARE_PLUGIN_CHARGING_MONITOR";
+    public static final String ACTION_SENSOR_WATERMARKING = "ACTION_SENSOR_WATERMARKING";
 
     public static final String EXTRA_DATA = "data";
 
@@ -66,9 +66,14 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         if (sensor.getType() == Sensor.TYPE_HEART_RATE&&do_test) {//&&1==0 not doing heart rate alone
             heart_rate = (int) event.values[0];
 
+
+            Intent intent = new Intent(ACTION_SENSOR_WATERMARKING);
+            intent.putExtra(EXTRA_DATA, heart_rate);
+            sendBroadcast(intent);
+
             heart_rate_count++;
 
-            Log.d("SENSORS10","heart_rate_count = "+heart_rate_count);
+            Log.d("SENSORS10","heart_rate_sent = "+heart_rate_count);
 
             if(timestamp_start==0) {
                 timestamp_start=System.currentTimeMillis();
@@ -233,7 +238,7 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         };
         //context_producer = CONTEXT_PRODUCER;
 
-        startService(new Intent(Plugin.this, Procedure.class));
+        //startService(new Intent(Plugin.this, Procedure.class));
 
         //Activate plugin
         Aware.startPlugin(this, "com.aware.plugin.template");
