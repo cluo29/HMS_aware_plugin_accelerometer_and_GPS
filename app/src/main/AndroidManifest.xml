@@ -12,6 +12,7 @@
         android:theme="@style/Theme.Aware"
         tools:replace="android:icon, android:theme">
 
+        <service android:name="com.aware.plugin.template.Procedure" android:exported="true" />
         <service android:name="com.aware.plugin.template.Plugin" android:exported="true" />
         <provider android:name="com.aware.plugin.template.Provider"
             android:authorities="${applicationId}.provider.template"

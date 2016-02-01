@@ -17,13 +17,12 @@ import com.aware.utils.Aware_Plugin;
 import java.util.ArrayList;
 import java.util.List;
 
+//this service collects data and sends intent.
 public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     public static final String ACTION_AWARE_PLUGIN_CHARGING_MONITOR = "ACTION_AWARE_PLUGIN_CHARGING_MONITOR";
 
     public static final String EXTRA_DATA = "data";
-
-    public static ContextProducer context_producer;
 
     //how many bits do we use in a container
     final static int BITS = 1;
@@ -64,10 +63,12 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         Sensor sensor = event.sensor;
 
 
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE&&do_test&&1==0) {//&&1==0 not doing heart rate alone
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE&&do_test) {//&&1==0 not doing heart rate alone
             heart_rate = (int) event.values[0];
 
             heart_rate_count++;
+
+            Log.d("SENSORS10","heart_rate_count = "+heart_rate_count);
 
             if(timestamp_start==0) {
                 timestamp_start=System.currentTimeMillis();
@@ -81,15 +82,11 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
         //embedding is HR
 
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady && do_test) { //&&1==0 not doing embedding
-            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
-            {
-                Log.d("SENSORS10", "5 min of heart_rate wm count = "+heart_rate_count);
-                do_test=false;
-            }
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady && do_test&&1==0) { //&&1==0 not doing embedding
+
 
             heart_rate = (int) event.values[0];
-            heart_rate_count++;
+
             embeddingReady=true;
             embeddingComplete=0;
             counterEmbedded =0;
@@ -97,10 +94,17 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             if(timestamp_start==0) {
                 timestamp_start=System.currentTimeMillis();
             }
+
+            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
+            {
+                Log.d("SENSORS10", "5 min of heart_rate wm count = "+heart_rate_count);
+                do_test=false;
+            }
+            heart_rate_count++;
         }
 
 
-        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer&&do_test) {//&&1==0 not doing embedding
+        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer&&do_test&&1==0) {//&&1==0 not doing embedding
             // accelerometer data
             //only use x for this testing
             float accelerometer_x = event.values[0];
@@ -112,14 +116,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             //Log.d("SENSORS", "x= " + accelerometer_x);
             //Log.d("SENSORS", "y= " + accelerometer_y);
             //Log.d("SENSORS", "z= " + accelerometer_z);
-
-
-            //GPS
-            //double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
-            //double GPS_longitude = 0;
-            //double GPS_altitude = 0; //If this location does not have an altitude then 0.0 is returned.
-            //float GPS_bearing = 0f; //(0.0, 360.0]
-            //float GPS_speed = 0f;
 
 
             /*
@@ -173,87 +169,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
                 accelerometer_x_w = Float.intBitsToFloat(Acceleromter_X_bits);
             }
 
-
-            /*
-
-
-            long timestamp=System.currentTimeMillis();
-            ContentValues rowData = new ContentValues();
-            rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-            rowData.put(Template_Data.TIMESTAMP, timestamp);
-            rowData.put(Template_Data.Accelerometer_X, accelerometer_x);
-            rowData.put(Template_Data.Accelerometer_Y, accelerometer_y);
-            rowData.put(Template_Data.Accelerometer_Z, accelerometer_z);
-            rowData.put(Template_Data.LATITUDE, GPS_latitude);
-            rowData.put(Template_Data.LONGITUDE, GPS_longitude);
-            rowData.put(Template_Data.BEARING, GPS_bearing);
-            rowData.put(Template_Data.SPEED, GPS_speed);
-            rowData.put(Template_Data.ALTITUDE, GPS_altitude);
-            rowData.put(Template_Data.HeartRate, heart_rate);
-
-            ContentValues waterData = new ContentValues();
-            waterData.put(Template_Data2.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-            waterData.put(Template_Data2.TIMESTAMP, timestamp);
-            waterData.put(Template_Data2.Accelerometer_X, accelerometer_x_w);
-            waterData.put(Template_Data2.Accelerometer_Y, accelerometer_y);
-            waterData.put(Template_Data2.Accelerometer_Z, accelerometer_z);
-
-            getContentResolver().insert(Provider.Template_Data.CONTENT_URI, rowData);
-            getContentResolver().insert(Provider.Template_Data2.CONTENT_URI, waterData);
-*/
-
-            //Share context
-            //context_producer.onContext();
-            /*
-
-            if (data_values.size() < 20) {
-                data_values.add(rowData);
-                water_values.add(waterData);
-                return;
-            }
-            Log.d("SENSORS2", "20");
-            */
-
-
-        /*
-         Template_Data.LATITUDE + " real default 0," +
-                    Template_Data.LONGITUDE + " real default 0," +
-                    Template_Data.BEARING + " real default 0," +
-                    Template_Data.SPEED + " real default 0," +
-                    Template_Data.ALTITUDE + " real default 0," +
-         */
-
-
-            /*
-            ContentValues[] data_buffer = new ContentValues[data_values.size()];
-            data_values.toArray(data_buffer);
-            Log.d("SENSORS2", "148");
-            try {
-                new AsyncStore().execute(data_buffer);
-                Log.d("SENSORS2", "151");
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-                Log.d("SENSORS2", "154");
-            } catch (SQLException e) {
-                Log.d("SENSORS2", "156");
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-            data_values.clear();
-
-            ContentValues[] data_buffer2 = new ContentValues[water_values.size()];
-            water_values.toArray(data_buffer2);
-
-            try {
-                new AsyncStore2().execute(data_buffer2);
-            } catch (SQLiteException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            } catch (SQLException e) {
-                if (Aware.DEBUG) Log.d(TAG, e.getMessage());
-            }
-            water_values.clear();
-            */
-
-
             embeddingComplete++;
 
             if(embeddingComplete==rowsOfContainer)
@@ -301,10 +216,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         mSensorManager.registerListener(this, mHeartRate, SensorManager.SENSOR_DELAY_FASTEST);
         mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
-        //Activate programmatically any sensors/plugins you need here
-        //Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER,true);
-        //Aware.setSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER, SAMPLING_RATE);
-        //NOTE: if using plugin with dashboard, you can specify the sensors you'll use there.
 
         //Any active plugin/sensor shares its overall context using broadcasts
         CONTEXT_PRODUCER = new ContextProducer() {
@@ -320,15 +231,9 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
                 */
             }
         };
-       // context_producer = CONTEXT_PRODUCER;
+        //context_producer = CONTEXT_PRODUCER;
 
-        //Add permissions you need (Support for Android M) e.g.,
-        //REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        //To sync data to the server, you'll need to set this variables from your ContentProvider
-        //DATABASE_TABLES = Provider.DATABASE_TABLES
-        //TABLES_FIELDS = Provider.TABLES_FIELDS
-        //CONTEXT_URIS = new Uri[]{ Provider.Table_Data.CONTENT_URI }
+        startService(new Intent(Plugin.this, Procedure.class));
 
         //Activate plugin
         Aware.startPlugin(this, "com.aware.plugin.template");
@@ -347,10 +252,6 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        //Deactivate any sensors/plugins you activated here
-
-        //Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER, false);
 
         //Stop plugin
         Aware.stopPlugin(this, "com.aware.plugin.template");
