@@ -17,7 +17,28 @@ public class Procedure extends Service implements SensorEventListener {
     private static SensorManager mSensorManager;
     private static Sensor mAccelerometer;
 
-    public void onAccuracyChanged(Sensor arg0, int arg1) {
+
+    public Thread receive_thread = new Thread() {
+        public void run() {
+            while (true) {
+
+                //should not sleep
+                /*
+                try {
+                    Thread.sleep(6000);
+                    //detect once every 6 secs
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
+
+            }
+        }
+    };
+
+
+
+
+            public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
     }
 
