@@ -47,7 +47,9 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     private static int counterEmbedded;//how many bits embedded
 
+    //how many heart rate rows are got
     private static int heart_rate_count=0;
+
     private static long timestamp_start=0;
 
     private static boolean do_test=true;
@@ -79,12 +81,17 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
         //embedding is HR
 
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady) { //&&1==0 not doing embedding
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady && do_test) { //&&1==0 not doing embedding
+            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
+            {
+                Log.d("SENSORS10", "5 min of heart_rate wm count = "+heart_rate_count);
+                do_test=false;
+            }
+
             heart_rate = (int) event.values[0];
             heart_rate_count++;
             embeddingReady=true;
             embeddingComplete=0;
-            //Log.d("SENSORS", "heart_rate = " + heart_rate);
             counterEmbedded =0;
             bits_heart_rate=String.format("%32s", Integer.toBinaryString(heart_rate)).replace(' ', '0');
             if(timestamp_start==0) {
@@ -93,18 +100,21 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         }
 
 
-        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer&&1==0) {//&&1==0 not doing embedding
+        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER && embeddingReady && embeddingComplete<rowsOfContainer&&do_test) {//&&1==0 not doing embedding
             // accelerometer data
+            //only use x for this testing
             float accelerometer_x = event.values[0];
-            float accelerometer_y = event.values[1];
-            float accelerometer_z = event.values[2];
+
+
+            //float accelerometer_y = event.values[1];
+            //float accelerometer_z = event.values[2];
 
             //Log.d("SENSORS", "x= " + accelerometer_x);
             //Log.d("SENSORS", "y= " + accelerometer_y);
             //Log.d("SENSORS", "z= " + accelerometer_z);
 
 
-            //HR as embedding
+            //GPS
             //double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
             //double GPS_longitude = 0;
             //double GPS_altitude = 0; //If this location does not have an altitude then 0.0 is returned.
@@ -125,48 +135,45 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             //http://developer.android.com/reference/android/location/Location.html
             */
 
-            //water here
-            //Log.d("SENSORS","110");
-            int bits = Float.floatToIntBits(accelerometer_x);
-            //Log.d("SENSORS","111="+bits);
-            String sbits = String.format("%32s", Integer.toBinaryString(bits)).replace(' ', '0');
-            //Log.d("SENSORS","114="+sbits);
-            char[] cbits  = sbits.toCharArray();
-            cbits[Float.SIZE-1] = '1';
-            //Log.d("SENSORS","115="+cbits);
+            //watermarking starts here
+
+            int Acceleromter_X_bits = Float.floatToIntBits(accelerometer_x);
+
+            String Acceleromter_X_binaryString = String.format("%32s", Integer.toBinaryString(Acceleromter_X_bits)).replace(' ', '0');
+
+            char[] Acceleromter_X_binaryChar  = Acceleromter_X_binaryString.toCharArray();
+
+            //flag, if 1, the sensor reading is used for watermarking
+            Acceleromter_X_binaryChar[Float.SIZE-1] = '1';
+
+            //embed BITS digits to from the digit next to flag
             for (int i = 0; i < BITS;i++){
-                //Log.d("SENSORS","117");
-                cbits[Float.SIZE-2-i] = bits_heart_rate.charAt(counterEmbedded);
+
+                Acceleromter_X_binaryChar[Float.SIZE-2-i] = bits_heart_rate.charAt(counterEmbedded);
+
                 counterEmbedded++;
             }
-            //Log.d("SENSORS","121");
+
+            //marked signal float
             float accelerometer_x_w;
-            if(cbits[0] == '1')
+
+            //if the signal is negative
+            if(Acceleromter_X_binaryChar[0] == '1')
             {
-                cbits[0] = '0';
-                sbits = String.valueOf(cbits);
-                bits = Integer.parseInt(sbits,2);
-                accelerometer_x_w = -Float.intBitsToFloat(bits);
+                Acceleromter_X_binaryChar[0] = '0';
+                Acceleromter_X_binaryString = String.valueOf(Acceleromter_X_binaryChar);
+                Acceleromter_X_bits = Integer.parseInt(Acceleromter_X_binaryString,2);
+                accelerometer_x_w = -Float.intBitsToFloat(Acceleromter_X_bits);
 
             }
             else
             {
-                sbits = String.valueOf(cbits);
-                bits = Integer.parseInt(sbits,2);
-                accelerometer_x_w = Float.intBitsToFloat(bits);
+                Acceleromter_X_binaryString = String.valueOf(Acceleromter_X_binaryChar);
+                Acceleromter_X_bits = Integer.parseInt(Acceleromter_X_binaryString,2);
+                accelerometer_x_w = Float.intBitsToFloat(Acceleromter_X_bits);
             }
-            //Log.d("SENSORS","125="+bits);
-            //float  = Float.intBitsToFloat(bits);
-            //float accelerometer_x_w = Float.intBitsToFloat(bits);
-            //save data in DB
-            // Log.d("SENSORS","129="+accelerometer_x_w);
 
 
-            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
-            {
-                Log.d("SENSORS10", "5 min of heart_rate wm count = "+heart_rate_count);
-                do_test=false;
-            }
             /*
 
 
