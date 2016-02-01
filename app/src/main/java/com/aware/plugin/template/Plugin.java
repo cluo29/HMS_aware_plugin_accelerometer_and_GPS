@@ -4,13 +4,10 @@ package com.aware.plugin.template;
 
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteException;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.aware.Aware;
@@ -20,9 +17,6 @@ import com.aware.utils.Aware_Plugin;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.aware.plugin.template.Provider.Template_Data;
-import com.aware.plugin.template.Provider.Template_Data2;
-
 public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     public static final String ACTION_AWARE_PLUGIN_CHARGING_MONITOR = "ACTION_AWARE_PLUGIN_CHARGING_MONITOR";
@@ -31,15 +25,11 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     public static ContextProducer context_producer;
 
-    //get a thread to collect real time accelerometer without using AWARE
-    /**
-     * Sensor update frequency in microseconds, default 200000
-     */
-
-    private static int SAMPLING_RATE = 20000; //200000= 0.2sec, 20000=20ms
+    //how many bits do we use in a container
+    final static int BITS = 1;
 
     //how many rows of container data are needed?
-    final static int BITS = 1;
+    //32 float
     private static int rowsOfContainer = 32 / BITS;
 
 
@@ -55,42 +45,51 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
 
     String bits_heart_rate;
 
-    private static int cntr;//how many bits embedded
+    private static int counterEmbedded;//how many bits embedded
 
     private static int heart_rate_count=0;
     private static long timestamp_start=0;
+
+    private static boolean do_test=true;
 
     public void onAccuracyChanged(Sensor arg0, int arg1) {
         // TODO Auto-generated method stub
     }
 
+    //single thread
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
 
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE&&1==0) {//&&1==0 not doing heart rate alone
+
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE&&do_test&&1==0) {//&&1==0 not doing heart rate alone
             heart_rate = (int) event.values[0];
-            Log.d("SENSORS", "heart_rate = " + heart_rate);
+
             heart_rate_count++;
-            Log.d("SENSORS", "heart_rate count = "+heart_rate_count);
+
             if(timestamp_start==0) {
                 timestamp_start=System.currentTimeMillis();
             }
-
-            if(System.currentTimeMillis()-timestamp_start>=10000) //*3600)
+            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
             {
-                Log.d("SENSORS10", "10 sec of heart_rate count = "+heart_rate_count);
+                Log.d("SENSORS10", "5 min of heart_rate count = "+heart_rate_count);
+                do_test=false;
             }
         }
+
         //embedding is HR
 
-        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady&&1==0) { //&&1==0 not doing embedding
+        if (sensor.getType() == Sensor.TYPE_HEART_RATE && !embeddingReady) { //&&1==0 not doing embedding
             heart_rate = (int) event.values[0];
+            heart_rate_count++;
             embeddingReady=true;
             embeddingComplete=0;
-            Log.d("SENSORS", "heart_rate = " + heart_rate);
-            cntr=0;
+            //Log.d("SENSORS", "heart_rate = " + heart_rate);
+            counterEmbedded =0;
             bits_heart_rate=String.format("%32s", Integer.toBinaryString(heart_rate)).replace(' ', '0');
+            if(timestamp_start==0) {
+                timestamp_start=System.currentTimeMillis();
+            }
         }
 
 
@@ -100,17 +99,17 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             float accelerometer_y = event.values[1];
             float accelerometer_z = event.values[2];
 
-            Log.d("SENSORS", "x= " + accelerometer_x);
-            Log.d("SENSORS", "y= " + accelerometer_y);
-            Log.d("SENSORS", "z= " + accelerometer_z);
+            //Log.d("SENSORS", "x= " + accelerometer_x);
+            //Log.d("SENSORS", "y= " + accelerometer_y);
+            //Log.d("SENSORS", "z= " + accelerometer_z);
 
 
             //HR as embedding
-            double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
-            double GPS_longitude = 0;
-            double GPS_altitude = 0; //If this location does not have an altitude then 0.0 is returned.
-            float GPS_bearing = 0f; //(0.0, 360.0]
-            float GPS_speed = 0f;
+            //double GPS_latitude = 0; //sixth decimal place is worth up to 0.11 m:
+            //double GPS_longitude = 0;
+            //double GPS_altitude = 0; //If this location does not have an altitude then 0.0 is returned.
+            //float GPS_bearing = 0f; //(0.0, 360.0]
+            //float GPS_speed = 0f;
 
 
             /*
@@ -137,8 +136,8 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             //Log.d("SENSORS","115="+cbits);
             for (int i = 0; i < BITS;i++){
                 //Log.d("SENSORS","117");
-                cbits[Float.SIZE-2-i] = bits_heart_rate.charAt(cntr);
-                cntr++;
+                cbits[Float.SIZE-2-i] = bits_heart_rate.charAt(counterEmbedded);
+                counterEmbedded++;
             }
             //Log.d("SENSORS","121");
             float accelerometer_x_w;
@@ -163,11 +162,15 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
             // Log.d("SENSORS","129="+accelerometer_x_w);
 
 
-            long timestamp=System.currentTimeMillis();
-
+            if(System.currentTimeMillis()-timestamp_start>=1000*300) //*3600)
+            {
+                Log.d("SENSORS10", "5 min of heart_rate wm count = "+heart_rate_count);
+                do_test=false;
+            }
             /*
 
 
+            long timestamp=System.currentTimeMillis();
             ContentValues rowData = new ContentValues();
             rowData.put(Template_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
             rowData.put(Template_Data.TIMESTAMP, timestamp);
@@ -288,8 +291,8 @@ public class Plugin extends Aware_Plugin implements SensorEventListener{
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mHeartRate = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
 
-        mSensorManager.registerListener(this, mHeartRate, SensorManager.SENSOR_DELAY_NORMAL);
-        mSensorManager.registerListener(this, mAccelerometer, SAMPLING_RATE);
+        mSensorManager.registerListener(this, mHeartRate, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
 
         //Activate programmatically any sensors/plugins you need here
         //Aware.setSetting(this, Aware_Preferences.STATUS_ACCELEROMETER,true);
